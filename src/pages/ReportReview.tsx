@@ -4,7 +4,7 @@ import { CheckCircle2, AlertCircle, Download, ArrowRight, Loader2 } from 'lucide
 
 export default function ReportReview() {
   const navigate = useNavigate();
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+  const API_BASE = import.meta.env.VITE_API_BASE || 'https://amlco-report-generator-production.up.railway.app';
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

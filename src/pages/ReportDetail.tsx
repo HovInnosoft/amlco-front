@@ -4,7 +4,7 @@ import { Download, CheckCircle2, AlertCircle, Edit3, Share2, Save } from 'lucide
 
 export default function ReportDetail() {
   const { id } = useParams();
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+  const API_BASE = import.meta.env.VITE_API_BASE || 'https://amlco-report-generator-production.up.railway.app';
   const [title, setTitle] = useState('AMLCO Annual Report');
   const [contentHtml, setContentHtml] = useState('');
   const [baseHtml, setBaseHtml] = useState('');

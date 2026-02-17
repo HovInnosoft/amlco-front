@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { Upload, FileText, CheckCircle2, AlertCircle, ArrowRight, X } from 'lucide-react';
 
 export default function ReportUpload() {
-  const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000';
+  const API_BASE = import.meta.env.VITE_API_BASE || 'https://amlco-report-generator-production.up.railway.app';
   const dataInputRef = useRef<HTMLInputElement | null>(null);
   const [dataFiles, setDataFiles] = useState<File[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<
