@@ -8,11 +8,22 @@ export default function ReportUpload() {
   const dataInputRef = useRef<HTMLInputElement | null>(null);
   const isExcelFile = (file: File) => {
     const name = file.name.toLowerCase();
-    if (name.endsWith('.xlsx') || name.endsWith('.xls') || name.endsWith('.xlsm') || name.endsWith('.xlsb')) {
+    if (
+      name.endsWith('.xlsx') ||
+      name.endsWith('.xls') ||
+      name.endsWith('.xlsm') ||
+      name.endsWith('.xlsb') ||
+      name.endsWith('.csv')
+    ) {
       return true;
     }
     const type = file.type.toLowerCase();
-    return type.includes('spreadsheetml') || type.includes('ms-excel');
+    return (
+      type.includes('spreadsheetml') ||
+      type.includes('ms-excel') ||
+      type.includes('text/csv') ||
+      type.includes('application/csv')
+    );
   };
   const [dataFiles, setDataFiles] = useState<File[]>([]);
   const [pageError, setPageError] = useState<string | null>(null);
