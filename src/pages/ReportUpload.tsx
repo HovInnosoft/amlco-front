@@ -5,12 +5,21 @@ import { Upload, FileText, CheckCircle2, AlertCircle, ArrowRight, X } from 'luci
 export default function ReportUpload() {
   const API_BASE = import.meta.env.VITE_API_BASE || 'https://amlco-report-generator-production.up.railway.app';
   const dataInputRef = useRef<HTMLInputElement | null>(null);
+  const isExcelFile = (file: File) => {
+    const name = file.name.toLowerCase();
+    if (name.endsWith('.xlsx') || name.endsWith('.xls') || name.endsWith('.xlsm') || name.endsWith('.xlsb')) {
+      return true;
+    }
+    const type = file.type.toLowerCase();
+    return type.includes('spreadsheetml') || type.includes('ms-excel');
+  };
   const [dataFiles, setDataFiles] = useState<File[]>([]);
   const [uploadedFiles, setUploadedFiles] = useState<
     Array<{
       file: File;
       addedAt: number;
       kind: 'data';
+      isExcel: boolean;
       status: 'uploading' | 'uploaded' | 'error';
       serverId?: string;
       deleteUrl?: string;
@@ -50,15 +59,21 @@ export default function ReportUpload() {
       file,
       addedAt: now + idx,
       kind: 'data' as const,
+      isExcel: isExcelFile(file),
       status: 'uploading' as const,
     }));
     setUploadedFiles((prev) => [...prev, ...items]);
 
     for (const item of items) {
       try {
-        const isExcel = item.file.name.toLowerCase().endsWith('.xlsx');
+        const isExcel = item.isExcel;
         const result = isExcel ? await uploadExcel(item.file) : await uploadDocument(item.file);
-        const serverId = isExcel ? result.excel_id : result.document_id;
+        const serverId = isExcel
+          ? result?.excel_id ?? result?.id ?? result?.file_id
+          : result?.document_id ?? result?.id ?? result?.file_id;
+        if (!serverId) {
+          throw new Error('Upload succeeded but no file ID was returned');
+        }
         const deleteUrl = isExcel
           ? `${API_BASE}/api/upload-excel/${serverId}`
           : `${API_BASE}/api/upload-document/${serverId}`;
@@ -93,8 +108,17 @@ export default function ReportUpload() {
       setDataFiles(nextData);
       return next;
     });
-    if (target?.kind === 'data' && target?.file?.name?.toLowerCase().endsWith('.xlsx')) {
-      localStorage.removeItem('excel_id');
+    if (target?.kind === 'data' && target?.isExcel) {
+      const remainingExcel = uploadedFiles
+        .filter((_, i) => i !== index)
+        .filter((item) => item.kind === 'data' && item.isExcel && item.status === 'uploaded')
+        .map((item) => item.serverId)
+        .filter((id): id is string => Boolean(id));
+      if (remainingExcel.length > 0) {
+        localStorage.setItem('excel_id', remainingExcel[remainingExcel.length - 1]);
+      } else {
+        localStorage.removeItem('excel_id');
+      }
     }
   };
 
