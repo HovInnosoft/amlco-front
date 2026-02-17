@@ -1,8 +1,9 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useRef, useState } from 'react';
 import { Upload, FileText, CheckCircle2, AlertCircle, ArrowRight, X } from 'lucide-react';
 
 export default function ReportUpload() {
+  const navigate = useNavigate();
   const API_BASE = import.meta.env.VITE_API_BASE || 'https://amlco-report-generator-production.up.railway.app';
   const dataInputRef = useRef<HTMLInputElement | null>(null);
   const isExcelFile = (file: File) => {
@@ -14,6 +15,7 @@ export default function ReportUpload() {
     return type.includes('spreadsheetml') || type.includes('ms-excel');
   };
   const [dataFiles, setDataFiles] = useState<File[]>([]);
+  const [pageError, setPageError] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<
     Array<{
       file: File;
@@ -49,6 +51,7 @@ export default function ReportUpload() {
   };
 
   const onPickDataFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPageError(null);
     const files = Array.from(e.target.files || []);
     if (dataInputRef.current) {
       dataInputRef.current.value = '';
@@ -89,6 +92,9 @@ export default function ReportUpload() {
         setUploadedFiles((prev) =>
           prev.map((f) => (f.addedAt === item.addedAt ? { ...f, status: 'error' } : f))
         );
+        if (item.isExcel) {
+          setPageError('Excel upload failed. Please re-upload the Excel file.');
+        }
       }
     }
   };
@@ -133,6 +139,26 @@ export default function ReportUpload() {
     }
     const value = unit === 0 ? Math.round(size) : Math.round(size * 10) / 10;
     return `${value} ${units[unit]}`;
+  };
+
+  const uploadedExcelIds = uploadedFiles
+    .filter((item) => item.kind === 'data' && item.isExcel && item.status === 'uploaded')
+    .map((item) => item.serverId)
+    .filter((id): id is string => Boolean(id));
+  const hasUploadedExcel = uploadedExcelIds.length > 0;
+  const isUploadingAny = uploadedFiles.some((item) => item.status === 'uploading');
+
+  const onContinueToReview = () => {
+    if (isUploadingAny) {
+      setPageError('Please wait until all uploads are finished before continuing.');
+      return;
+    }
+    if (!hasUploadedExcel) {
+      setPageError('Please upload at least one Excel file before continuing.');
+      return;
+    }
+    localStorage.setItem('excel_id', uploadedExcelIds[uploadedExcelIds.length - 1]);
+    navigate('/reports/new/review');
   };
 
   return (
@@ -215,14 +241,19 @@ export default function ReportUpload() {
           </div>
 
           <div className="flex justify-end items-center">
-            <Link
-              to="/reports/new/review"
-              className="inline-flex items-center space-x-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            <button
+              type="button"
+              onClick={onContinueToReview}
+              disabled={isUploadingAny}
+              className="inline-flex items-center space-x-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <span>Continue to Review</span>
               <ArrowRight className="w-4 h-4" />
-            </Link>
+            </button>
           </div>
+          {pageError && (
+            <p className="text-sm text-red-600 mt-3 text-right">{pageError}</p>
+          )}
         </div>
       </div>
     </div>
