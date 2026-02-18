@@ -32,6 +32,13 @@ export default function ReportReview() {
       }
       const data = await res.json();
       if (data?.report_id) {
+        const missingSections = data?.section_compare?.missing_in_excel_sections;
+        if (Array.isArray(missingSections) && missingSections.length > 0) {
+          sessionStorage.setItem(
+            `report_missing_sections_${data.report_id}`,
+            JSON.stringify(missingSections)
+          );
+        }
         navigate(`/reports/${data.report_id}`);
         return;
       }

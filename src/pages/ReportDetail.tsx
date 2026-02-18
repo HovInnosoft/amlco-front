@@ -16,6 +16,8 @@ export default function ReportDetail() {
   const [editedText, setEditedText] = useState('');
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [missingSections, setMissingSections] = useState<string[]>([]);
+  const [showMissingSectionsModal, setShowMissingSectionsModal] = useState(false);
 
   const htmlToText = (html: string) => {
     if (!html) return '';
@@ -74,6 +76,19 @@ export default function ReportDetail() {
         setBaseHtml(data?.base_html || '');
         setEditedText(htmlToText(data?.content_html || data?.base_html || ''));
         setStatus(data?.status || {});
+        const sessionKey = `report_missing_sections_${id}`;
+        const rawMissing = sessionStorage.getItem(sessionKey);
+        if (rawMissing) {
+          try {
+            const parsed = JSON.parse(rawMissing);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setMissingSections(parsed.filter((item) => typeof item === 'string'));
+              setShowMissingSectionsModal(true);
+            }
+          } finally {
+            sessionStorage.removeItem(sessionKey);
+          }
+        }
       } catch (err: any) {
         if (!active) return;
         setError(err?.message || 'Failed to load report');
@@ -152,6 +167,37 @@ export default function ReportDetail() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {showMissingSectionsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="w-full max-w-2xl bg-white rounded-xl shadow-xl border border-slate-200">
+            <div className="px-6 py-4 border-b border-slate-200 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                  <AlertCircle className="w-5 h-5 text-amber-600" />
+                  Missing Sections
+                </h2>
+                <p className="text-sm text-slate-600 mt-1">
+                  These report sections were not found in the uploaded file.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowMissingSectionsModal(false)}
+                className="px-3 py-1.5 text-sm bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+            <div className="px-6 py-4 max-h-[55vh] overflow-y-auto">
+              <ul className="list-disc pl-5 space-y-1 text-sm text-slate-800">
+                {missingSections.map((section) => (
+                  <li key={section}>{section}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="mb-8">
         <Link to="/reports" className="text-sm text-blue-600 hover:text-blue-700 font-medium mb-4 inline-block">
           ← Back to Reports
