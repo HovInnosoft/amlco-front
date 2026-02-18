@@ -6,25 +6,6 @@ export default function ReportUpload() {
   const navigate = useNavigate();
   const API_BASE = import.meta.env.VITE_API_BASE || 'https://amlco-report-generator-production.up.railway.app';
   const dataInputRef = useRef<HTMLInputElement | null>(null);
-  const isExcelFile = (file: File) => {
-    const name = file.name.toLowerCase();
-    if (
-      name.endsWith('.xlsx') ||
-      name.endsWith('.xls') ||
-      name.endsWith('.xlsm') ||
-      name.endsWith('.xlsb') ||
-      name.endsWith('.csv')
-    ) {
-      return true;
-    }
-    const type = file.type.toLowerCase();
-    return (
-      type.includes('spreadsheetml') ||
-      type.includes('ms-excel') ||
-      type.includes('text/csv') ||
-      type.includes('application/csv')
-    );
-  };
   const [dataFiles, setDataFiles] = useState<File[]>([]);
   const [pageError, setPageError] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<
@@ -73,39 +54,49 @@ export default function ReportUpload() {
       file,
       addedAt: now + idx,
       kind: 'data' as const,
-      isExcel: isExcelFile(file),
+      isExcel: false,
       status: 'uploading' as const,
     }));
     setUploadedFiles((prev) => [...prev, ...items]);
 
     for (const item of items) {
       try {
-        const isExcel = item.isExcel;
-        const result = isExcel ? await uploadExcel(item.file) : await uploadDocument(item.file);
-        const serverId = isExcel
-          ? result?.excel_id ?? result?.id ?? result?.file_id
-          : result?.document_id ?? result?.id ?? result?.file_id;
-        if (!serverId) {
-          throw new Error('Upload succeeded but no file ID was returned');
+        let uploadedAsExcel = false;
+        let serverId: string | undefined;
+        let deleteUrl: string | undefined;
+
+        try {
+          const excelResult = await uploadExcel(item.file);
+          serverId = excelResult?.excel_id ?? excelResult?.id ?? excelResult?.file_id;
+          if (!serverId) {
+            throw new Error('Upload succeeded but no Excel file ID was returned');
+          }
+          deleteUrl = `${API_BASE}/api/upload-excel/${serverId}`;
+          uploadedAsExcel = true;
+        } catch {
+          const docResult = await uploadDocument(item.file);
+          serverId = docResult?.document_id ?? docResult?.id ?? docResult?.file_id;
+          if (!serverId) {
+            throw new Error('Upload succeeded but no document ID was returned');
+          }
+          deleteUrl = `${API_BASE}/api/upload-document/${serverId}`;
         }
-        const deleteUrl = isExcel
-          ? `${API_BASE}/api/upload-excel/${serverId}`
-          : `${API_BASE}/api/upload-document/${serverId}`;
+
         setUploadedFiles((prev) =>
           prev.map((f) =>
-            f.addedAt === item.addedAt ? { ...f, status: 'uploaded', serverId, deleteUrl } : f
+            f.addedAt === item.addedAt
+              ? { ...f, isExcel: uploadedAsExcel, status: 'uploaded', serverId, deleteUrl }
+              : f
           )
         );
-        if (isExcel && serverId) {
+        if (uploadedAsExcel) {
           localStorage.setItem('excel_id', serverId);
         }
       } catch (err) {
         setUploadedFiles((prev) =>
           prev.map((f) => (f.addedAt === item.addedAt ? { ...f, status: 'error' } : f))
         );
-        if (item.isExcel) {
-          setPageError('Excel upload failed. Please re-upload the Excel file.');
-        }
+        setPageError('Upload failed. Please retry.');
       }
     }
   };
