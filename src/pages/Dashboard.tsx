@@ -1,45 +1,9 @@
 import { Link } from 'react-router-dom';
-import { FileText, Plus, Clock, TrendingUp, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 export default function Dashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <Clock className="w-6 h-6 text-green-600" />
-            </div>
-            <span className="text-2xl font-bold text-slate-900">12.4h</span>
-          </div>
-          <h3 className="text-sm font-medium text-slate-600 mb-1">Time Saved</h3>
-          <p className="text-xs text-slate-500">This month</p>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <FileText className="w-6 h-6 text-blue-600" />
-            </div>
-            <span className="text-2xl font-bold text-slate-900">8</span>
-          </div>
-          <h3 className="text-sm font-medium text-slate-600 mb-1">Reports Generated</h3>
-          <p className="text-xs text-slate-500">Last 30 days</p>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-          <div className="flex items-center justify-between mb-4">
-            <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-orange-600" />
-            </div>
-            <span className="text-2xl font-bold text-slate-900">95%</span>
-          </div>
-          <h3 className="text-sm font-medium text-slate-600 mb-1">Avg Completion</h3>
-          <p className="text-xs text-slate-500">Data completeness</p>
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
