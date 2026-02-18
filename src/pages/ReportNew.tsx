@@ -69,10 +69,7 @@ export default function ReportNew() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-slate-500">
-                <span className="font-medium">Estimated time saved:</span> 8-12 hours
-              </div>
+            <div className="flex items-center justify-end">
               <Link
                 to="/reports/new/upload"
                 className="inline-flex items-center space-x-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
