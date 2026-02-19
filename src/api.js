@@ -1,5 +1,21 @@
 const API_BASE = import.meta.env.VITE_API_BASE || "https://amlco-report-generator-production.up.railway.app";
 
+export async function getTemplateSections() {
+  const res = await fetch(`${API_BASE}/api/template-sections`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Failed to fetch template sections");
+  return data; // {sections: [...]}
+}
+
+export async function uploadDocument(file) {
+  const fd = new FormData();
+  fd.append("file", file);
+  const res = await fetch(`${API_BASE}/api/upload-document`, { method: "POST", body: fd });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.detail || "Upload failed");
+  return data; // {document_id}
+}
+
 export async function uploadSource(file) {
   const fd = new FormData();
   fd.append("file", file);
