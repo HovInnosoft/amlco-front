@@ -1,13 +1,21 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
-import ReportNew from './pages/ReportNew';
 import ReportUpload from './pages/ReportUpload';
 import ReportReview from './pages/ReportReview';
 import Reports from './pages/Reports';
 import ReportDetail from './pages/ReportDetail';
 import Download from './pages/Download';
+import SetupPage from './pages/SetupPage.jsx';
+
+function SetupRoute() {
+  const navigate = useNavigate();
+
+  return (
+    <SetupPage onCreated={(reportId: string) => navigate(`/reports/${reportId}`)} />
+  );
+}
 
 function App() {
   return (
@@ -19,7 +27,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/reports/:id" element={<ReportDetail />} />
-          <Route path="/reports/new" element={<ReportNew />} />
+          <Route path="/reports/new" element={<SetupRoute />} />
           <Route path="/reports/new/upload" element={<ReportUpload />} />
           <Route path="/reports/new/review" element={<ReportReview />} />
           <Route path="*" element={<Navigate to="/" replace />} />

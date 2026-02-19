@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useMemo, useState } from 'react';
-import { FileText, Download, Eye, CheckCircle2, AlertCircle, Plus, Search, Trash2 } from 'lucide-react';
+import { FileText, Download, Eye, CheckCircle2, Plus, Search, Trash2 } from 'lucide-react';
 
 export default function Reports() {
   const API_BASE = import.meta.env.VITE_API_BASE || 'https://amlco-report-generator-production.up.railway.app';

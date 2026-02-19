@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { FileText, LayoutDashboard, LogOut, Clock } from 'lucide-react';
+import { FileText, LayoutDashboard } from 'lucide-react';
 
 export default function Layout() {
   const location = useLocation();
