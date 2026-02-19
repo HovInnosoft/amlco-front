@@ -194,7 +194,9 @@ export default function SetupPage({ onCreated }) {
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-slate-900">{title}</p>
-                          <p className="text-xs text-slate-600 mt-1">{String(preview).slice(0, 220) || "No preview text."}</p>
+                          <p className="text-xs text-slate-600 mt-1 whitespace-pre-wrap break-words">
+                            {String(preview) || "No preview text."}
+                          </p>
                         </div>
                       </div>
                     </div>
