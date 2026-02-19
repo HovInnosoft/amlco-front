@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight, CheckCircle2, FileText } from "lucide-react";
 import { uploadSource, uploadAnnualReport, createReport } from "../api.js";
 
 export default function SetupPage({ onCreated }) {
@@ -78,115 +80,161 @@ export default function SetupPage({ onCreated }) {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
-      <h1 className="text-2xl font-bold text-slate-900">Setup Report</h1>
-
-      <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
-        <label className="block text-sm font-medium text-slate-700">Report Type</label>
-        <select
-          className="w-full border border-slate-300 rounded-lg px-3 py-2"
-          value={reportType}
-          onChange={(e) => setReportType(e.target.value)}
-        >
-          <option value="annual">Annual</option>
-        </select>
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8">
+        <Link to="/dashboard" className="text-sm text-blue-600 hover:text-blue-700 font-medium mb-4 inline-block">
+          ← Back to Dashboard
+        </Link>
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Create New Report</h1>
+        <p className="text-slate-600">Upload source documents, review parsed sections, and generate your draft.</p>
       </div>
 
-      {step === "upload" && (
-        <div className="space-y-4">
-          <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
-            <label className="block text-sm font-medium text-slate-700">Source File</label>
-            <input
-              type="file"
-              accept="*/*"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              className="block w-full text-sm"
-            />
-            <button
-              type="button"
-              onClick={handleUpload}
-              disabled={!file}
-              className="px-4 py-2 rounded-lg bg-blue-600 text-white disabled:opacity-60"
-            >
-              Upload Source File
-            </button>
-          </div>
-
-          <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-3">
-            <label className="block text-sm font-medium text-slate-700">Annual Report (Optional)</label>
-            <input
-              type="file"
-              onChange={(e) => setReportFile(e.target.files?.[0] || null)}
-              className="block w-full text-sm"
-            />
-            <button
-              type="button"
-              onClick={handleAnnualReportUpload}
-              disabled={!reportFile}
-              className="px-4 py-2 rounded-lg bg-slate-700 text-white disabled:opacity-60"
-            >
-              Upload Annual Report
-            </button>
-            {annualReportId && (
-              <p className="text-xs text-green-700">Annual report uploaded: {annualReportId}</p>
-            )}
-          </div>
-
-          <button
-            type="button"
-            onClick={goReview}
-            disabled={sections.length === 0}
-            className="px-4 py-2 rounded-lg bg-emerald-600 text-white disabled:opacity-60"
+      <div className="space-y-6">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+          <h2 className="text-lg font-semibold text-slate-900 mb-4">Report Type</h2>
+          <select
+            className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-sm"
+            value={reportType}
+            onChange={(e) => setReportType(e.target.value)}
           >
-            Review Parsed Content
-          </button>
+            <option value="annual">AMLCO Annual Report</option>
+          </select>
         </div>
-      )}
 
-      {step === "review" && (
-        <div className="space-y-4">
-          <div className="bg-white border border-slate-200 rounded-xl p-5">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">Parsed Sections</h2>
-            <div className="space-y-3">
-              {sections.length === 0 && <p className="text-sm text-slate-600">No parsed sections yet.</p>}
-              {sections.map((section, idx) => {
-                const preview = section.source_texts?.[0]?.text || "";
-                const title =
-                  section.title ||
-                  section.section_title ||
-                  section.name ||
-                  `Section ${idx + 1}`;
-                return (
-                  <div key={`${title}-${idx}`} className="border border-slate-200 rounded-lg p-3">
-                    <p className="text-sm font-medium text-slate-900">{title}</p>
-                    <p className="text-xs text-slate-600 mt-1">{String(preview).slice(0, 180)}</p>
-                  </div>
-                );
-              })}
+        {step === "upload" && (
+          <>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">Source File</h2>
+              <p className="text-sm text-slate-600 mb-4">
+                Upload one source file at a time. Parsed sections will be appended.
+              </p>
+              <input
+                type="file"
+                accept="*/*"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                className="block w-full text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-medium hover:file:bg-slate-200"
+              />
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-xs text-slate-500">
+                  {sourceIds.length} source file(s) uploaded • {sections.length} section(s) parsed
+                </span>
+                <button
+                  type="button"
+                  onClick={handleUpload}
+                  disabled={!file}
+                  className="inline-flex items-center space-x-2 px-5 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <span>Upload Source File</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-          </div>
 
-          <div className="flex gap-3">
-            <button
-              type="button"
-              onClick={goUpload}
-              className="px-4 py-2 rounded-lg bg-slate-200 text-slate-800"
-            >
-              Upload More Docs
-            </button>
-            <button
-              type="button"
-              onClick={handleCreate}
-              className="px-4 py-2 rounded-lg bg-blue-600 text-white"
-            >
-              Generate Report
-            </button>
-          </div>
-        </div>
-      )}
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+              <h2 className="text-lg font-semibold text-slate-900 mb-4">Annual Report (Optional)</h2>
+              <input
+                type="file"
+                onChange={(e) => setReportFile(e.target.files?.[0] || null)}
+                className="block w-full text-sm text-slate-700 file:mr-4 file:rounded-lg file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-medium hover:file:bg-slate-200"
+              />
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-xs text-slate-500">
+                  {annualReportId ? "Annual report uploaded" : "No annual report uploaded"}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleAnnualReportUpload}
+                  disabled={!reportFile}
+                  className="inline-flex items-center space-x-2 px-5 py-2.5 bg-slate-700 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  <span>Upload Annual Report</span>
+                </button>
+              </div>
+              {annualReportId && (
+                <p className="text-xs text-green-700 mt-3">Annual report id: {annualReportId}</p>
+              )}
+            </div>
 
-      {status && <p className="text-sm text-slate-700">{status}</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={goReview}
+                disabled={sections.length === 0}
+                className="inline-flex items-center space-x-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <span>Review Parsed Content</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </>
+        )}
+
+        {step === "review" && (
+          <>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+              <div className="p-6 border-b border-slate-200">
+                <h2 className="text-lg font-semibold text-slate-900">Parsed Sections ({sections.length})</h2>
+              </div>
+              <div className="divide-y divide-slate-200">
+                {sections.length === 0 && (
+                  <div className="p-6 text-sm text-slate-500">No parsed sections yet.</div>
+                )}
+                {sections.map((section, idx) => {
+                  const preview = section.source_texts?.[0]?.text || "";
+                  const title =
+                    section.title ||
+                    section.section_title ||
+                    section.name ||
+                    `Section ${idx + 1}`;
+                  return (
+                    <div key={`${title}-${idx}`} className="p-4 hover:bg-slate-50 transition-colors">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <FileText className="w-4 h-4 text-blue-600" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-slate-900">{title}</p>
+                          <p className="text-xs text-slate-600 mt-1">{String(preview).slice(0, 220) || "No preview text."}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={goUpload}
+                className="inline-flex items-center space-x-2 px-6 py-2.5 bg-white text-slate-700 rounded-lg font-medium hover:bg-slate-100 transition-colors border border-slate-300"
+              >
+                <span>Upload More Docs</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleCreate}
+                className="inline-flex items-center space-x-2 px-6 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              >
+                <span>Generate Report</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </>
+        )}
+
+        {(status || error) && (
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+            {status && (
+              <p className="text-sm text-green-700 flex items-center space-x-2">
+                <CheckCircle2 className="w-4 h-4" />
+                <span>{status}</span>
+              </p>
+            )}
+            {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
