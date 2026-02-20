@@ -31,10 +31,27 @@ export default function SetupPage({ onCreated }) {
     fetchTemplateSections();
   }, []);
 
+  const getSectionState = (sectionName) => {
+    return sectionData[sectionName] || {
+      documentIds: [],
+      urls: [],
+      pendingFile: null,
+      pendingUrl: "",
+      comment: "",
+      uploading: false,
+    };
+  };
+
   const handleFileUpload = async (sectionName, file) => {
     if (!file) return;
     setError("");
-    setUploadingSection(sectionName);
+    setSectionData((prev) => ({
+      ...prev,
+      [sectionName]: {
+        ...getSectionState(sectionName),
+        uploading: true,
+      },
+    }));
     try {
       setStatus(`Uploading document for ${sectionName}...`);
       const data = await uploadDocument(file);
@@ -43,35 +60,44 @@ export default function SetupPage({ onCreated }) {
       setSectionData((prev) => ({
         ...prev,
         [sectionName]: {
-          ...prev[sectionName],
-          documentIds: [...(prev[sectionName]?.documentIds || []), documentId],
+          ...getSectionState(sectionName),
+          documentIds: [...getSectionState(sectionName).documentIds, documentId],
+          uploading: false,
         },
       }));
       setStatus(`Document uploaded to ${sectionName}`);
     } catch (e) {
       setError(e.message);
       setStatus("");
-    } finally {
-      setUploadingSection(null);
+      setSectionData((prev) => ({
+        ...prev,
+        [sectionName]: {
+          ...getSectionState(sectionName),
+          uploading: false,
+        },
+      }));
     }
   };
 
-  const handleUrlChange = (sectionName, urlIndex, url) => {
+  const handlePendingUrlChange = (sectionName, url) => {
     setSectionData((prev) => ({
       ...prev,
       [sectionName]: {
-        ...prev[sectionName],
-        urls: prev[sectionName]?.urls?.map((u, idx) => (idx === urlIndex ? url : u)) || [url],
+        ...getSectionState(sectionName),
+        pendingUrl: url,
       },
     }));
   };
 
   const handleAddUrl = (sectionName) => {
+    const state = getSectionState(sectionName);
+    if (!state.pendingUrl.trim()) return;
     setSectionData((prev) => ({
       ...prev,
       [sectionName]: {
-        ...prev[sectionName],
-        urls: [...(prev[sectionName]?.urls || []), ""],
+        ...state,
+        urls: [...state.urls, state.pendingUrl],
+        pendingUrl: "",
       },
     }));
   };
@@ -80,8 +106,8 @@ export default function SetupPage({ onCreated }) {
     setSectionData((prev) => ({
       ...prev,
       [sectionName]: {
-        ...prev[sectionName],
-        urls: prev[sectionName]?.urls?.filter((_, idx) => idx !== urlIndex) || [],
+        ...getSectionState(sectionName),
+        urls: getSectionState(sectionName).urls.filter((_, idx) => idx !== urlIndex),
       },
     }));
   };
@@ -90,16 +116,27 @@ export default function SetupPage({ onCreated }) {
     setSectionData((prev) => ({
       ...prev,
       [sectionName]: {
-        ...prev[sectionName],
-        documentIds: prev[sectionName]?.documentIds?.filter((_, idx) => idx !== docIndex) || [],
+        ...getSectionState(sectionName),
+        documentIds: getSectionState(sectionName).documentIds.filter((_, idx) => idx !== docIndex),
+      },
+    }));
+  };
+
+  const handleCommentChange = (sectionName, comment) => {
+    setSectionData((prev) => ({
+      ...prev,
+      [sectionName]: {
+        ...getSectionState(sectionName),
+        comment,
       },
     }));
   };
 
   const getSectionCount = () => {
-    return Object.values(sectionData).filter((data) => {
-      const hasDocuments = data.documentIds && data.documentIds.length > 0;
-      const hasUrls = data.urls && data.urls.some((url) => url.trim() !== "");
+    return Object.keys(sectionData).filter((sectionName) => {
+      const state = getSectionState(sectionName);
+      const hasDocuments = state.documentIds && state.documentIds.length > 0;
+      const hasUrls = state.urls && state.urls.length > 0;
       return hasDocuments || hasUrls;
     }).length;
   };
@@ -112,19 +149,18 @@ export default function SetupPage({ onCreated }) {
       // Build sections array with only sections that have data
       const sections = templateSections
         .filter((sectionName) => {
-          const data = sectionData[sectionName] || {};
-          const hasDocuments = data.documentIds && data.documentIds.length > 0;
-          const hasUrls = data.urls && data.urls.some((url) => url.trim() !== "");
+          const state = getSectionState(sectionName);
+          const hasDocuments = state.documentIds && state.documentIds.length > 0;
+          const hasUrls = state.urls && state.urls.length > 0;
           return hasDocuments || hasUrls;
         })
         .map((sectionName) => {
-          const data = sectionData[sectionName] || {};
-          // Filter out empty URLs
-          const filteredUrls = (data.urls || []).filter((url) => url.trim() !== "");
+          const state = getSectionState(sectionName);
           return {
             section_name: sectionName,
-            document_ids: data.documentIds || [],
-            urls: filteredUrls,
+            document_ids: state.documentIds || [],
+            urls: state.urls || [],
+            comment: state.comment || "",
           };
         });
 
@@ -187,10 +223,10 @@ export default function SetupPage({ onCreated }) {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
             {templateSections.map((sectionName) => {
-              const data = sectionData[sectionName] || {};
-              const hasFile = data.documentIds && data.documentIds.length > 0;
-              const hasUrl = data.urls && data.urls[0];
-              const isLoading = uploadingSection === sectionName;
+              const state = getSectionState(sectionName);
+              const hasFile = state.documentIds && state.documentIds.length > 0;
+              const hasUrl = state.urls && state.urls.length > 0;
+              const isLoading = state.uploading;
 
               return (
                 <div
@@ -231,9 +267,9 @@ export default function SetupPage({ onCreated }) {
                         }}
                         className="block w-full text-xs text-slate-700 file:mr-2 file:rounded file:border-0 file:bg-blue-50 file:px-3 file:py-1 file:text-xs file:font-medium hover:file:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
                       />
-                      {data.documentIds && data.documentIds.length > 0 && (
+                      {state.documentIds && state.documentIds.length > 0 && (
                         <div className="mt-2 space-y-1">
-                          {data.documentIds.map((docId, idx) => (
+                          {state.documentIds.map((docId, idx) => (
                             <div
                               key={`${sectionName}-doc-${idx}`}
                               className="flex items-center justify-between bg-green-50 rounded px-2 py-1"
@@ -258,36 +294,64 @@ export default function SetupPage({ onCreated }) {
                     <div>
                       <label className="block text-xs text-slate-600 mb-2">Add URLs</label>
                       <div className="space-y-2">
-                        {data.urls && data.urls.length > 0 ? (
-                          <>
-                            {data.urls.map((url, idx) => (
-                              <div key={`${sectionName}-url-${idx}`} className="flex gap-1">
-                                <input
-                                  type="url"
-                                  placeholder="https://example.com"
-                                  value={url}
-                                  onChange={(e) => handleUrlChange(sectionName, idx, e.target.value)}
-                                  className="flex-1 text-xs border border-slate-300 rounded px-2 py-1.5 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
+                        {state.urls && state.urls.length > 0 && (
+                          <div className="space-y-1">
+                            {state.urls.map((url, idx) => (
+                              <div
+                                key={`${sectionName}-url-${idx}`}
+                                className="flex items-center justify-between bg-blue-50 rounded px-2 py-1"
+                              >
+                                <span className="text-xs text-slate-700 truncate flex-1">
+                                  {url}
+                                </span>
                                 <button
                                   type="button"
                                   onClick={() => handleRemoveUrl(sectionName, idx)}
-                                  className="px-2 py-1.5 text-xs text-red-600 hover:text-red-700 font-medium border border-red-300 rounded hover:bg-red-50"
+                                  className="ml-2 text-xs text-red-600 hover:text-red-700 font-medium"
                                 >
                                   ✕
                                 </button>
                               </div>
                             ))}
-                          </>
-                        ) : null}
-                        <button
-                          type="button"
-                          onClick={() => handleAddUrl(sectionName)}
-                          className="w-full text-xs px-2 py-1.5 border border-dashed border-slate-300 rounded text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors"
-                        >
-                          + Add URL
-                        </button>
+                          </div>
+                        )}
+                        <div className="flex gap-1">
+                          <input
+                            type="url"
+                            placeholder="https://example.com"
+                            value={state.pendingUrl}
+                            onChange={(e) => handlePendingUrlChange(sectionName, e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === "Enter") {
+                                handleAddUrl(sectionName);
+                              }
+                            }}
+                            className="flex-1 text-xs border border-slate-300 rounded px-2 py-1.5 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleAddUrl(sectionName)}
+                            disabled={!state.pendingUrl.trim()}
+                            className="px-2.5 py-1.5 text-xs bg-blue-600 text-white rounded font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            Add
+                          </button>
+                        </div>
                       </div>
+                    </div>
+
+                    {/* Comment/Instructions Section */}
+                    <div>
+                      <label className="block text-xs text-slate-600 mb-2">
+                        Instructions (optional)
+                      </label>
+                      <textarea
+                        placeholder="Add custom instructions or notes for this section..."
+                        value={state.comment}
+                        onChange={(e) => handleCommentChange(sectionName, e.target.value)}
+                        className="w-full text-xs border border-slate-300 rounded px-2 py-1.5 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                        rows="2"
+                      />
                     </div>
                   </div>
                 </div>
