@@ -9,6 +9,7 @@ export default function SetupPage({ onCreated }) {
   const [status, setStatus] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
 
   // Track per-section data: { [sectionName]: { documentIds: [], urls: [] } }
   const [sectionData, setSectionData] = useState({});
@@ -55,38 +56,75 @@ export default function SetupPage({ onCreated }) {
     }
   };
 
-  const handleUrlChange = (sectionName, url) => {
+  const handleUrlChange = (sectionName, urlIndex, url) => {
     setSectionData((prev) => ({
       ...prev,
       [sectionName]: {
         ...prev[sectionName],
-        urls: [url],
+        urls: prev[sectionName]?.urls?.map((u, idx) => (idx === urlIndex ? url : u)) || [url],
+      },
+    }));
+  };
+
+  const handleAddUrl = (sectionName) => {
+    setSectionData((prev) => ({
+      ...prev,
+      [sectionName]: {
+        ...prev[sectionName],
+        urls: [...(prev[sectionName]?.urls || []), ""],
+      },
+    }));
+  };
+
+  const handleRemoveUrl = (sectionName, urlIndex) => {
+    setSectionData((prev) => ({
+      ...prev,
+      [sectionName]: {
+        ...prev[sectionName],
+        urls: prev[sectionName]?.urls?.filter((_, idx) => idx !== urlIndex) || [],
+      },
+    }));
+  };
+
+  const handleRemoveDocument = (sectionName, docIndex) => {
+    setSectionData((prev) => ({
+      ...prev,
+      [sectionName]: {
+        ...prev[sectionName],
+        documentIds: prev[sectionName]?.documentIds?.filter((_, idx) => idx !== docIndex) || [],
       },
     }));
   };
 
   const getSectionCount = () => {
-    return Object.values(sectionData).filter(
-      (data) => (data.documentIds && data.documentIds.length > 0) || (data.urls && data.urls[0])
-    ).length;
+    return Object.values(sectionData).filter((data) => {
+      const hasDocuments = data.documentIds && data.documentIds.length > 0;
+      const hasUrls = data.urls && data.urls.some((url) => url.trim() !== "");
+      return hasDocuments || hasUrls;
+    }).length;
   };
 
   const handleCreate = async () => {
     setError("");
     setStatus("Generating report...");
+    setGenerating(true);
     try {
       // Build sections array with only sections that have data
       const sections = templateSections
         .filter((sectionName) => {
           const data = sectionData[sectionName] || {};
-          return (data.documentIds && data.documentIds.length > 0) || (data.urls && data.urls[0]);
+          const hasDocuments = data.documentIds && data.documentIds.length > 0;
+          const hasUrls = data.urls && data.urls.some((url) => url.trim() !== "");
+          return hasDocuments || hasUrls;
         })
         .map((sectionName) => {
           const data = sectionData[sectionName] || {};
+          // Filter out empty URLs
+          const filteredUrls = (data.urls || []).filter((url) => url.trim() !== "");
           return {
             section_name: sectionName,
             document_ids: data.documentIds || [],
-            urls: data.urls || [],
+            urls: filteredUrls,
           };
         });
 
@@ -100,6 +138,7 @@ export default function SetupPage({ onCreated }) {
     } catch (e) {
       setError(e.message);
       setStatus("");
+      setGenerating(false);
     }
   };
 
@@ -177,8 +216,9 @@ export default function SetupPage({ onCreated }) {
                   </div>
 
                   <div className="space-y-3">
+                    {/* Document Upload Section */}
                     <div>
-                      <label className="block text-xs text-slate-600 mb-2">Upload Document</label>
+                      <label className="block text-xs text-slate-600 mb-2">Upload Documents</label>
                       <input
                         type="file"
                         disabled={isLoading}
@@ -191,22 +231,63 @@ export default function SetupPage({ onCreated }) {
                         }}
                         className="block w-full text-xs text-slate-700 file:mr-2 file:rounded file:border-0 file:bg-blue-50 file:px-3 file:py-1 file:text-xs file:font-medium hover:file:bg-blue-100 disabled:opacity-50 disabled:cursor-not-allowed"
                       />
-                      {hasFile && (
-                        <p className="text-xs text-green-700 mt-1">
-                          {data.documentIds.length} document(s) uploaded
-                        </p>
+                      {data.documentIds && data.documentIds.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                          {data.documentIds.map((docId, idx) => (
+                            <div
+                              key={`${sectionName}-doc-${idx}`}
+                              className="flex items-center justify-between bg-green-50 rounded px-2 py-1"
+                            >
+                              <span className="text-xs text-slate-700 truncate flex-1">
+                                {docId}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveDocument(sectionName, idx)}
+                                className="ml-2 text-xs text-red-600 hover:text-red-700 font-medium"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       )}
                     </div>
 
+                    {/* URLs Section */}
                     <div>
-                      <label className="block text-xs text-slate-600 mb-2">Or Enter URL</label>
-                      <input
-                        type="url"
-                        placeholder="https://example.com"
-                        value={data.urls?.[0] || ""}
-                        onChange={(e) => handleUrlChange(sectionName, e.target.value)}
-                        className="block w-full text-xs border border-slate-300 rounded px-2 py-1.5 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      />
+                      <label className="block text-xs text-slate-600 mb-2">Add URLs</label>
+                      <div className="space-y-2">
+                        {data.urls && data.urls.length > 0 ? (
+                          <>
+                            {data.urls.map((url, idx) => (
+                              <div key={`${sectionName}-url-${idx}`} className="flex gap-1">
+                                <input
+                                  type="url"
+                                  placeholder="https://example.com"
+                                  value={url}
+                                  onChange={(e) => handleUrlChange(sectionName, idx, e.target.value)}
+                                  className="flex-1 text-xs border border-slate-300 rounded px-2 py-1.5 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveUrl(sectionName, idx)}
+                                  className="px-2 py-1.5 text-xs text-red-600 hover:text-red-700 font-medium border border-red-300 rounded hover:bg-red-50"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            ))}
+                          </>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => handleAddUrl(sectionName)}
+                          className="w-full text-xs px-2 py-1.5 border border-dashed border-slate-300 rounded text-slate-600 hover:border-slate-400 hover:bg-slate-50 transition-colors"
+                        >
+                          + Add URL
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -227,7 +308,7 @@ export default function SetupPage({ onCreated }) {
           </button>
         </div>
 
-        {(status || error) && (
+        {(status || error) && !generating && (
           <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
             {status && (
               <p className="text-sm text-green-700 flex items-center space-x-2">
@@ -239,6 +320,23 @@ export default function SetupPage({ onCreated }) {
           </div>
         )}
       </div>
+
+      {generating && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-lg p-8 max-w-sm w-full mx-4">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="relative w-12 h-12">
+                <div className="absolute inset-0 rounded-full border-4 border-slate-200"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-600 animate-spin"></div>
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-medium text-slate-900">Generating Report</p>
+                <p className="text-xs text-slate-600 mt-1">This may take a moment...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
