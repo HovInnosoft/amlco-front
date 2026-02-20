@@ -19,7 +19,7 @@ export default function SetupPage({ onCreated }) {
       try {
         setLoading(true);
         const data = await getTemplateSections();
-        setTemplateSections(data.sections || []);
+        setTemplateSections(data.section_names || []);
         setError("");
       } catch (e) {
         setError(e.message);
@@ -77,14 +77,14 @@ export default function SetupPage({ onCreated }) {
     try {
       // Build sections array with only sections that have data
       const sections = templateSections
-        .filter((section) => {
-          const data = sectionData[section.name] || {};
+        .filter((sectionName) => {
+          const data = sectionData[sectionName] || {};
           return (data.documentIds && data.documentIds.length > 0) || (data.urls && data.urls[0]);
         })
-        .map((section) => {
-          const data = sectionData[section.name] || {};
+        .map((sectionName) => {
+          const data = sectionData[sectionName] || {};
           return {
-            section_name: section.name,
+            section_name: sectionName,
             document_ids: data.documentIds || [],
             urls: data.urls || [],
           };
@@ -147,19 +147,19 @@ export default function SetupPage({ onCreated }) {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
-            {templateSections.map((section) => {
-              const data = sectionData[section.name] || {};
+            {templateSections.map((sectionName) => {
+              const data = sectionData[sectionName] || {};
               const hasFile = data.documentIds && data.documentIds.length > 0;
               const hasUrl = data.urls && data.urls[0];
-              const isLoading = uploadingSection === section.name;
+              const isLoading = uploadingSection === sectionName;
 
               return (
                 <div
-                  key={section.name}
+                  key={sectionName}
                   className="border border-slate-200 rounded-lg p-4 hover:border-slate-300 transition-colors"
                 >
                   <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-medium text-slate-900 text-sm">{section.name}</h3>
+                    <h3 className="font-medium text-slate-900 text-sm">{sectionName}</h3>
                     {(hasFile || hasUrl) && (
                       <div className="flex gap-1">
                         {hasFile && (
@@ -185,7 +185,7 @@ export default function SetupPage({ onCreated }) {
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) {
-                            handleFileUpload(section.name, file);
+                            handleFileUpload(sectionName, file);
                             e.target.value = "";
                           }
                         }}
@@ -204,7 +204,7 @@ export default function SetupPage({ onCreated }) {
                         type="url"
                         placeholder="https://example.com"
                         value={data.urls?.[0] || ""}
-                        onChange={(e) => handleUrlChange(section.name, e.target.value)}
+                        onChange={(e) => handleUrlChange(sectionName, e.target.value)}
                         className="block w-full text-xs border border-slate-300 rounded px-2 py-1.5 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
