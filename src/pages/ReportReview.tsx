@@ -94,7 +94,7 @@ export default function ReportReview() {
               </div>
               <div>
                 <p className="text-xs text-slate-500 mb-1">Entity</p>
-                <p className="text-sm font-medium text-slate-900">Egard Management Ltd</p>
+                <p className="text-sm font-medium text-slate-900">Test Company</p>
               </div>
               <div>
                 <p className="text-xs text-slate-500 mb-1">Reporting Period</p>

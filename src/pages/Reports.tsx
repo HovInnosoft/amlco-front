@@ -197,7 +197,7 @@ export default function Reports() {
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <h3 className="text-lg font-semibold text-slate-900 mb-1">{r.title}</h3>
-                        <p className="text-sm text-slate-600">Egard Management Ltd</p>
+                        <p className="text-sm text-slate-600">Test Company</p>
                       </div>
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
                         <CheckCircle2 className="w-3 h-3 mr-1" />

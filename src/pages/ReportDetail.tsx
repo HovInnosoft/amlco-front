@@ -205,7 +205,7 @@ export default function ReportDetail() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 mb-2">{title}</h1>
-            <p className="text-slate-600">Egard Management Ltd • Jan 1 - Dec 31, 2025</p>
+            <p className="text-slate-600">Test Company • Jan 1 - Dec 31, 2025</p>
           </div>
           <span className="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-green-100 text-green-700">
             <CheckCircle2 className="w-4 h-4 mr-1.5" />
@@ -287,7 +287,7 @@ export default function ReportDetail() {
               </div>
               <div>
                 <p className="text-xs text-slate-500 mb-1">Entity</p>
-                <p className="text-sm font-medium text-slate-900">Egard Management Ltd</p>
+                <p className="text-sm font-medium text-slate-900">Test Company</p>
               </div>
             </div>
           </div>
